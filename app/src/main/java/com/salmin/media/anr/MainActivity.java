@@ -10,11 +10,13 @@ import android.support.v4.media.session.MediaControllerCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.Toolbar;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.ListView;
 import android.widget.TextView;
 
 import java.util.ArrayList;
@@ -43,8 +45,8 @@ public class MainActivity extends AppCompatActivity {
                         MediaControllerCompat mediaController =
                                 new MediaControllerCompat(
                                         MainActivity.this, mMediaBrowser.getSessionToken());
-                        updatePlaybackState(mediaController.getPlaybackState());
-                        updateMetadata(mediaController.getMetadata());
+//                        updatePlaybackState(mediaController.getPlaybackState());
+//                        updateMetadata(mediaController.getMetadata());
                         mediaController.registerCallback(mMediaControllerCallback);
                         MediaControllerCompat.setMediaController(
                                 MainActivity.this, mediaController);
@@ -106,6 +108,10 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         setTitle(getString(R.string.app_name));
+        setSupportActionBar((Toolbar) findViewById(R.id.toolbar));
+
+        mBrowserAdapter = new BrowseAdapter(this);
+        ListView listView = findViewById(R.id.list_view);
 
     }
 }
