@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.os.RemoteException;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.media.MediaBrowserCompat;
 import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaControllerCompat;
@@ -13,6 +14,7 @@ import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -45,8 +47,8 @@ public class MainActivity extends AppCompatActivity {
                         MediaControllerCompat mediaController =
                                 new MediaControllerCompat(
                                         MainActivity.this, mMediaBrowser.getSessionToken());
-//                        updatePlaybackState(mediaController.getPlaybackState());
-//                        updateMetadata(mediaController.getMetadata());
+                        updatePlaybackState(mediaController.getPlaybackState());
+                        updateMetadata(mediaController.getMetadata());
                         mediaController.registerCallback(mMediaControllerCallback);
                         MediaControllerCompat.setMediaController(
                                 MainActivity.this, mediaController);
@@ -55,6 +57,25 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
             };
+
+    private void updatePlaybackState(PlaybackStateCompat playbackState) {
+        mCurrentState = playbackState;
+        if (playbackState == null
+                || playbackState.getState() == PlaybackStateCompat.STATE_PAUSED
+                || playbackState.getState() == PlaybackStateCompat.STATE_STOPPED) {
+            mPlayPause.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.ic_shortcut_play_arrow));
+        } else {
+            mPlayPause.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.ic_shortcut_pause));
+        }
+        mPlaybackControls.setVisibility(playbackState == null ? View.GONE : View.VISIBLE);
+    }
+
+    private void updateMetadata(MediaMetadataCompat data) {
+        mCurrentMetadata = data;
+        mTitle.setText(data == null ? "" : data.getDescription().getTitle());
+        mSubtitle.setText(data == null ? "" : data.getDescription().getSubtitle());
+        mAlbumArt.setImageBitmap(data == null ? null : );
+    }
 
     private final MediaBrowserCompat.SubscriptionCallback mSubscriptionCallback =
             new MediaBrowserCompat.SubscriptionCallback() {
@@ -112,6 +133,33 @@ public class MainActivity extends AppCompatActivity {
 
         mBrowserAdapter = new BrowseAdapter(this);
         ListView listView = findViewById(R.id.list_view);
+        listView.setAdapter(mBrowserAdapter);
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                MediaBrowserCompat.MediaItem item = mBrowserAdapter.getItem(position);
+                onMediaItemSelected(item);
+            }
+        });
 
+        initViews();
+    }
+
+    private void initViews() {
+        mPlaybackControls = (ViewGroup) findViewById(R.id.playback_controls);
+        mPlayPause = (ImageButton) findViewById(R.id.play_pause);
+        mPlayPause.setEnabled(true);
+        mPlayPause.setOnClickListener(mPlaybackButtonListener);
+
+        mTitle = (TextView) findViewById(R.id.title);
+        mSubtitle = (TextView) findViewById(R.id.artist);
+        mAlbumArt = (ImageView) findViewById(R.id.album_art);
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+
+        mMediaBrowser = new MediaBrowserCompat(this, MuscisService.class, mConnectionCallback, null);
     }
 }
